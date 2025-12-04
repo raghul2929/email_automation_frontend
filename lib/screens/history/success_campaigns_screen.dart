@@ -22,7 +22,7 @@ class _SuccessCampaignsScreenState extends State<SuccessCampaignsScreen> {
   Future<void> _loadCampaigns() async {
     final authProvider = context.read<AuthProvider>();
     final campaignProvider = context.read<CampaignProvider>();
-    
+
     if (authProvider.currentUser != null) {
       await campaignProvider.fetchCampaigns();
     }
@@ -76,7 +76,9 @@ class _SuccessCampaignsScreenState extends State<SuccessCampaignsScreen> {
               itemBuilder: (context, index) {
                 final campaign = campaignProvider.campaigns[index];
                 final successRate = campaign.sentCount > 0
-                    ? (campaign.sentCount / (campaign.sentCount + campaign.failedCount) * 100)
+                    ? (campaign.sentCount /
+                        (campaign.sentCount + campaign.failedCount) *
+                        100)
                     : 0.0;
 
                 return Card(
@@ -86,7 +88,8 @@ class _SuccessCampaignsScreenState extends State<SuccessCampaignsScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => CampaignDetailScreen(campaign: campaign),
+                          builder: (_) =>
+                              CampaignDetailScreen(campaign: campaign),
                         ),
                       );
                     },
@@ -113,6 +116,39 @@ class _SuccessCampaignsScreenState extends State<SuccessCampaignsScreen> {
                               ),
                             ],
                           ),
+                          const SizedBox(height: 12),
+                          if (campaign.senderEmail != null) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.person_outline,
+                                  size: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Sent by: ',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    campaign.senderName ??
+                                        campaign.senderEmail!,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey[800],
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           Row(
                             children: [
@@ -141,10 +177,12 @@ class _SuccessCampaignsScreenState extends State<SuccessCampaignsScreen> {
                           const SizedBox(height: 12),
                           Row(
                             children: [
-                              Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                              Icon(Icons.access_time,
+                                  size: 14, color: Colors.grey[600]),
                               const SizedBox(width: 4),
                               Text(
-                                DateFormat('MMM dd, yyyy - hh:mm a').format(campaign.completedAt),
+                                DateFormat('MMM dd, yyyy - hh:mm a')
+                                    .format(campaign.completedAt),
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[600],

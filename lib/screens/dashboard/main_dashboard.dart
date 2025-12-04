@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:email_automation_app/core/utils/storage_helper.dart';
+import 'package:email_automation_app/widgets/ShowJwtButton.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -141,6 +142,8 @@ Future<void> _checkToken() async {
                 _showHelpDialog();
               },
             ),
+            const Divider(),
+           const ShowJwtButton(),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('Logout', style: TextStyle(color: Colors.red)),
