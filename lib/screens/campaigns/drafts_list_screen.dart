@@ -26,6 +26,11 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text(''),
+        backgroundColor: Colors.white10,
+        surfaceTintColor:Colors.white10, 
+      ),
       body: Consumer<CampaignProvider>(
         builder: (context, campaignProvider, _) {
           if (campaignProvider.isLoading) {

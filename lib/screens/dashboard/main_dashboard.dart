@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:email_automation_app/core/utils/storage_helper.dart';
 import 'package:email_automation_app/widgets/ShowJwtButton.dart';
 import 'package:flutter/material.dart';
@@ -30,27 +29,36 @@ class _MainDashboardState extends State<MainDashboard> {
   @override
   void initState() {
     super.initState();
-     _checkToken();
+    _checkToken();
     _loadData();
   }
 
-Future<void> _checkToken() async {
-  final token = await StorageHelper.getToken();
-  print('🔍 Token check:');
-  print('  - Exists: ${token != null}');
-  if (token != null) {
-    print('  - Length: ${token.length}');
-    print('  - Preview: ${token.substring(0, min(30, token.length))}...');
+  Future<void> _checkToken() async {
+    final token = await StorageHelper.getToken();
+    print('🔍 Token check:');
+    print('  - Exists: ${token != null}');
+    if (token != null) {
+      print('  - Length: ${token.length}');
+      print('  - Preview: ${token.substring(0, min(30, token.length))}...');
+    }
   }
-}
+
   Future<void> _loadData() async {
     final campaignProvider = context.read<CampaignProvider>();
     final authProvider = context.read<AuthProvider>();
-    
-    await campaignProvider.fetchDrafts();
-    if (authProvider.currentUser != null) {
-      await campaignProvider.fetchCampaigns();
-    }
+
+    // await campaignProvider.fetchDrafts();
+    // if (authProvider.currentUser != null) {
+    //   await campaignProvider.fetchCampaigns();
+    // }
+
+    // Proposed change for _loadData
+    final draftsFuture = campaignProvider.fetchDrafts();
+    final campaignsFuture = authProvider.currentUser != null
+        ? campaignProvider.fetchCampaigns()
+        : Future.value(); // Return empty future if null
+
+    await Future.wait([draftsFuture, campaignsFuture]);
   }
 
   @override
@@ -60,6 +68,8 @@ Future<void> _checkToken() async {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Email Automation'),
+        backgroundColor: Colors.white10,
+        surfaceTintColor: Colors.white10,
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
@@ -86,7 +96,10 @@ Future<void> _checkToken() async {
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
                 child: Text(
-                  authProvider.currentUser?.name.substring(0, 1).toUpperCase() ?? 'U',
+                  authProvider.currentUser?.name
+                          .substring(0, 1)
+                          .toUpperCase() ??
+                      'U',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -106,7 +119,7 @@ Future<void> _checkToken() async {
             ),
             ListTile(
               leading: const Icon(Icons.add_circle_outline),
-              title: const Text('New Campaign'),
+              title: const Text('New'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -143,7 +156,7 @@ Future<void> _checkToken() async {
               },
             ),
             const Divider(),
-           const ShowJwtButton(),
+            // const ShowJwtButton(),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('Logout', style: TextStyle(color: Colors.red)),
@@ -234,7 +247,7 @@ class DashboardHome extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 20),
               Text(
                 'Manage your email campaigns efficiently',
                 style: TextStyle(
@@ -242,7 +255,7 @@ class DashboardHome extends StatelessWidget {
                   color: Colors.grey[600],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 50),
               Row(
                 children: [
                   Expanded(
@@ -252,7 +265,11 @@ class DashboardHome extends StatelessWidget {
                       icon: Icons.drafts_outlined,
                       color: Colors.orange,
                       onTap: () {
-                        // Navigate to drafts
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const DraftsListScreen()),
+                        );
                       },
                     ),
                   ),
@@ -265,23 +282,39 @@ class DashboardHome extends StatelessWidget {
                       color: Colors.green,
                       onTap: () {
                         // Navigate to success
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const SuccessCampaignsScreen()),
+                           
+                        );
                       },
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 30),
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const NewCampaignScreen()),
+                    MaterialPageRoute(
+                        builder: (_) => const NewCampaignScreen()),
                   );
                 },
-                icon: const Icon(Icons.add),
-                label: const Text('Create New Campaign'),
+                icon: const Icon(
+                  Icons.add,
+                  size: 24,
+                  color: Colors.white,
+                ),
+                label: const Text('Create New',
+                    style: TextStyle(fontSize: 18, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                 ),
               ),
               const SizedBox(height: 24),
@@ -359,8 +392,10 @@ class _DashboardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Colors.white,
       child: InkWell(
         onTap: onTap,
+        splashColor: Colors.white,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(20),
