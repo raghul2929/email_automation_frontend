@@ -42,7 +42,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Complete Registration'),
+        backgroundColor: Colors.white10,
+        surfaceTintColor:Colors.white10, 
       ),
+      
       body: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
           return LoadingOverlay(
@@ -78,14 +81,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       validator: Validators.validateName,
                       prefixIcon: const Icon(Icons.person_outline),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 32),
                     CustomTextField(
                       controller: _emailController,
                       label: 'Email',
                       enabled: false,
                       prefixIcon: const Icon(Icons.email_outlined),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 32),
                     DropdownButtonFormField<String>(
                       value: _selectedProfession,
                       decoration: const InputDecoration(
@@ -105,7 +108,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       },
                       validator: Validators.validateProfession,
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 50),
                     CustomButton(
                       text: 'Continue',
                       onPressed: _handleRegistration,

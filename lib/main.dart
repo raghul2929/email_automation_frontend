@@ -1,5 +1,8 @@
+import 'package:device_preview/device_preview.dart';
 import 'package:email_automation_app/screens/auth/login_screen.dart';
+import 'package:email_automation_app/screens/auth/registration_screen.dart';
 import 'package:email_automation_app/screens/dashboard/main_dashboard.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -7,14 +10,21 @@ import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/campaign_provider.dart';
 import 'screens/splash_screen.dart';
+// import 'package:device_preview/device_preview.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase
   await Firebase.initializeApp();
-  
-  runApp(const MyApp());
+
+  // runApp(const MyApp());
+
+  runApp(
+    DevicePreview(
+      enabled: !kReleaseMode, // disable in release
+      builder: (context) => const MyApp()),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -32,6 +42,7 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         home: const AuthWrapper(),
+        // home: const RegistrationScreen(),
       ),
     );
   }
@@ -56,10 +67,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   Future<void> _checkAuthState() async {
     final authProvider = context.read<AuthProvider>();
-    
+
     // ✅ Check if user is already logged in
     await authProvider.checkAuthState();
-    
+
     setState(() {
       _isChecking = false;
     });
