@@ -18,13 +18,13 @@ void main() async {
   // Initialize Firebase
   await Firebase.initializeApp();
 
-  // runApp(const MyApp());
+  runApp(const MyApp());
 
-  runApp(
-    DevicePreview(
-      enabled: !kReleaseMode, // disable in release
-      builder: (context) => const MyApp()),
-  );
+  // runApp(
+  //   DevicePreview(
+  //     enabled: !kReleaseMode, // disable in release
+  //     builder: (context) => const MyApp()),
+  // );
 }
 
 class MyApp extends StatelessWidget {

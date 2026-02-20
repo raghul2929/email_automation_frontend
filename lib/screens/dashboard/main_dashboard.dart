@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:email_automation_app/core/utils/storage_helper.dart';
-import 'package:email_automation_app/widgets/ShowJwtButton.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -22,177 +21,287 @@ class _MainDashboardState extends State<MainDashboard> {
 
   final List<Widget> _screens = [
     const DashboardHome(),
-    const DraftsListScreen(),
-    const SuccessCampaignsScreen(),
+    const DraftsListScreen(), // Placeholder for other screens
+    const SuccessCampaignsScreen(), // Placeholder
   ];
+
+  // Specific colors from your design
+  final Color _brandPurple = const Color(0xFF8B5CF6);
+  final Color _bgLight = const Color(0xFFF8F9FD);
+  final Color _textDark = const Color(0xFF1F2937);
 
   @override
   void initState() {
     super.initState();
-    _checkToken();
     _loadData();
-  }
-
-  Future<void> _checkToken() async {
-    final token = await StorageHelper.getToken();
-    print('🔍 Token check:');
-    print('  - Exists: ${token != null}');
-    if (token != null) {
-      print('  - Length: ${token.length}');
-      print('  - Preview: ${token.substring(0, min(30, token.length))}...');
-    }
   }
 
   Future<void> _loadData() async {
     final campaignProvider = context.read<CampaignProvider>();
     final authProvider = context.read<AuthProvider>();
 
-    // await campaignProvider.fetchDrafts();
-    // if (authProvider.currentUser != null) {
-    //   await campaignProvider.fetchCampaigns();
-    // }
-
-    // Proposed change for _loadData
     final draftsFuture = campaignProvider.fetchDrafts();
     final campaignsFuture = authProvider.currentUser != null
         ? campaignProvider.fetchCampaigns()
-        : Future.value(); // Return empty future if null
+        : Future.value();
 
     await Future.wait([draftsFuture, campaignsFuture]);
   }
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
-
     return Scaffold(
+      backgroundColor: _bgLight,
       appBar: AppBar(
-        title: const Text('Email Automation'),
-        backgroundColor: Colors.white10,
-        surfaceTintColor: Colors.white10,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: _showHelpDialog,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(Icons.menu_rounded, color: Colors.grey[700], size: 28),
+            onPressed: () => Scaffold.of(context).openDrawer(),
           ),
-        ],
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
+        ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            UserAccountsDrawerHeader(
+            Container(
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
+                color: _brandPurple,
+                borderRadius: BorderRadius.circular(8),
               ),
-              accountName: Text(
-                authProvider.currentUser?.name ?? 'User',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+              child: const Icon(Icons.bolt, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Email Automation',
+              style: TextStyle(
+                color: _textDark,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
-              accountEmail: Text(authProvider.currentUser?.email ?? ''),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Text(
-                  authProvider.currentUser?.name
-                          .substring(0, 1)
-                          .toUpperCase() ??
-                      'U',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.dashboard_outlined),
-              title: const Text('Dashboard'),
-              selected: _selectedIndex == 0,
-              onTap: () {
-                setState(() => _selectedIndex = 0);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.add_circle_outline),
-              title: const Text('New'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NewCampaignScreen()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.drafts_outlined),
-              title: const Text('Drafts'),
-              selected: _selectedIndex == 1,
-              onTap: () {
-                setState(() => _selectedIndex = 1);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.check_circle_outline),
-              title: const Text('Success'),
-              selected: _selectedIndex == 2,
-              onTap: () {
-                setState(() => _selectedIndex = 2);
-                Navigator.pop(context);
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.help_outline),
-              title: const Text('Help'),
-              onTap: () {
-                Navigator.pop(context);
-                _showHelpDialog();
-              },
-            ),
-            const Divider(),
-            // const ShowJwtButton(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Logout', style: TextStyle(color: Colors.red)),
-              onTap: _handleLogout,
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.help_outline_rounded,
+                color: Colors.grey[600], size: 28),
+            onPressed: () {},
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
+      drawer: _buildCustomDrawer(context),
       body: _screens[_selectedIndex],
     );
   }
 
-  void _showHelpDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Help'),
-        content: const Text(
-          'Email Automation Platform\n\n'
-          '1. Create campaigns by uploading Excel files\n'
-          '2. Excel must have "name" and "email" columns\n'
-          '3. Edit drafts before sending\n'
-          '4. Track campaign success in history\n\n'
-          'Need more help? Contact support.',
+  // --- CUSTOM DRAWER UI MATCHING IMAGE ---
+  Widget _buildCustomDrawer(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final user = authProvider.currentUser;
+
+    return Drawer(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+            topRight: Radius.circular(0), bottomRight: Radius.circular(0)),
+      ),
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 30),
+            // 1. Profile Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 35,
+                    backgroundColor: Colors.grey[200],
+                    // Replace with actual user image if available
+                    backgroundImage: const NetworkImage(
+                        'https://i.pravatar.cc/150?u=a042581f4e29026024d'),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    user?.name ?? 'John Doe',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: _textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user?.email ?? 'john.doe@email.com',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 40),
+
+            // 2. Navigation Items
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                children: [
+                  // Active Dashboard Button (Purple)
+                  _buildDrawerItem(
+                    title: 'Dashboard',
+                    icon: Icons.grid_view_rounded,
+                    isActive: _selectedIndex == 0,
+                    onTap: () {
+                      setState(() => _selectedIndex = 0);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDrawerItem(
+                    title: 'New Campaign',
+                    icon: Icons.add_circle_outline_rounded,
+                    isActive: false,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const NewCampaignScreen()));
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDrawerItem(
+                    title: 'Drafts',
+                    icon: Icons.description_outlined,
+                    isActive: _selectedIndex == 1,
+                    onTap: () {
+                      setState(() => _selectedIndex = 1);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDrawerItem(
+                    title: 'Success',
+                    icon: Icons.check_circle_outline_rounded,
+                    isActive: _selectedIndex == 2,
+                    onTap: () {
+                      setState(() => _selectedIndex = 2);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const Spacer(),
+
+            // 3. Bottom Actions
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                children: [
+                  _buildSimpleLink('Settings', Icons.settings),
+                  const SizedBox(height: 20),
+                  InkWell(
+                    onTap: () => _handleLogout(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: const [
+                          Icon(Icons.logout_rounded,
+                              color: Colors.red, size: 20),
+                          SizedBox(width: 12),
+                          Text(
+                            'Logout',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
       ),
     );
   }
 
-  Future<void> _handleLogout() async {
+  Widget _buildDrawerItem({
+    required String title,
+    required IconData icon,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isActive ? _brandPurple : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isActive ? Colors.white : const Color(0xFF4B5563),
+              size: 22,
+            ),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: TextStyle(
+                color: isActive ? Colors.white : const Color(0xFF4B5563),
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSimpleLink(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFF4B5563), size: 22),
+        const SizedBox(width: 16),
+        Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF4B5563),
+            fontWeight: FontWeight.w500,
+            fontSize: 16,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -211,7 +320,7 @@ class _MainDashboardState extends State<MainDashboard> {
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       await context.read<AuthProvider>().logout();
       if (mounted) {
         Navigator.pushAndRemoveUntil(
@@ -224,7 +333,7 @@ class _MainDashboardState extends State<MainDashboard> {
   }
 }
 
-// Dashboard Home Screen
+// --- DASHBOARD HOME UI MATCHING IMAGE ---
 class DashboardHome extends StatelessWidget {
   const DashboardHome({Key? key}) : super(key: key);
 
@@ -232,194 +341,294 @@ class DashboardHome extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer2<AuthProvider, CampaignProvider>(
       builder: (context, authProvider, campaignProvider, _) {
+        final user = authProvider.currentUser;
         final draftsCount = campaignProvider.drafts.length;
         final campaignsCount = campaignProvider.campaigns.length;
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 1. Welcome Header
               Text(
-                'Welcome, ${authProvider.currentUser?.name ?? 'User'}!',
+                'Welcome back, ${user?.name?.split(' ')[0] ?? 'John'}!',
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F2937),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 6),
               Text(
-                'Manage your email campaigns efficiently',
+                "Here's what's happening with your projects today.",
                 style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
+                  fontSize: 14,
+                  color: Colors.grey[500],
+                  height: 1.5,
                 ),
               ),
-              const SizedBox(height: 50),
+
+              const SizedBox(height: 24),
+
+              // 2. Stats Cards (Success & Drafts)
               Row(
                 children: [
                   Expanded(
-                    child: _DashboardCard(
-                      title: 'Drafts',
-                      count: draftsCount,
-                      icon: Icons.drafts_outlined,
-                      color: Colors.orange,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const DraftsListScreen()),
-                        );
-                      },
+                    child: _buildStatCard(
+                      label: 'Success',
+                      count: campaignsCount.toString(),
+                      icon: Icons.check_circle_rounded,
+                      iconColor: const Color(0xFF10B981),
+                      iconBg: const Color(0xFFD1FAE5),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _DashboardCard(
-                      title: 'Sent',
-                      count: campaignsCount,
-                      icon: Icons.send_outlined,
-                      color: Colors.green,
-                      onTap: () {
-                        // Navigate to success
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const SuccessCampaignsScreen()),
-                           
-                        );
-                      },
+                    child: _buildStatCard(
+                      label: 'Drafts',
+                      count: draftsCount.toString(),
+                      icon: Icons.description_rounded,
+                      iconColor: const Color(0xFF8B5CF6),
+                      iconBg: const Color(0xFFEDE9FE),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 30),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const NewCampaignScreen()),
-                  );
-                },
-                icon: const Icon(
-                  Icons.add,
-                  size: 24,
-                  color: Colors.white,
-                ),
-                label: const Text('Create New',
-                    style: TextStyle(fontSize: 18, color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Recent Drafts',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (draftsCount == 0)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.drafts_outlined,
-                          size: 64,
-                          color: Colors.grey[300],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No drafts yet',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
+
+              const SizedBox(height: 32),
+
+              // 3. Recent Drafts Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Recent Drafts',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F2937),
                     ),
                   ),
-                )
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const DraftsListScreen()));
+                    },
+                    child: const Text(
+                      'View All',
+                      style: TextStyle(
+                          color: Color(0xFF8B5CF6),
+                          fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // 4. Drafts List
+              if (draftsCount == 0)
+                _buildEmptyState()
               else
                 ...campaignProvider.drafts.take(3).map((draft) {
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      leading: const CircleAvatar(
-                        child: Icon(Icons.email_outlined),
-                      ),
-                      title: Text(draft.campaignName),
-                      subtitle: Text('${draft.totalRecipients} recipients'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () {
-                        // Navigate to draft detail
-                      },
-                    ),
+                  return _buildDraftCard(
+                    title: draft.campaignName.isEmpty
+                        ? 'Untitled Campaign'
+                        : draft.campaignName,
+                    date: 'May 14', // Replace with dynamic formatted date
+                    members: 3, // Replace with actual recipient count logic
                   );
-                }).toList(),
+                }),
             ],
           ),
         );
       },
     );
   }
-}
 
-class _DashboardCard extends StatelessWidget {
-  final String title;
-  final int count;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _DashboardCard({
-    required this.title,
-    required this.count,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Colors.white,
-      child: InkWell(
-        onTap: onTap,
-        splashColor: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Icon(icon, size: 40, color: color),
-              const SizedBox(height: 12),
-              Text(
-                count.toString(),
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
+  Widget _buildStatCard({
+    required String label,
+    required String count,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconBg,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: 24),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            count,
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.grey[500],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDraftCard({
+    required String title,
+    required String date,
+    required int members,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  date,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[500],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildAvatarStack(),
+                    const SizedBox(width: 8),
+                    Text(
+                      '+$members members',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7D6),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              'Draft',
+              style: TextStyle(
+                color: Color(0xFFB45309), // Dark orange/brown text
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarStack() {
+    return SizedBox(
+      width: 50,
+      height: 24,
+      child: Stack(
+        children: [
+          const Positioned(
+            left: 0,
+            child: CircleAvatar(
+              radius: 12,
+              backgroundColor: Colors.white,
+              child: CircleAvatar(
+                radius: 10,
+                backgroundImage: NetworkImage('https://i.pravatar.cc/100?u=1'),
+              ),
+            ),
+          ),
+          const Positioned(
+            left: 15,
+            child: CircleAvatar(
+              radius: 12,
+              backgroundColor: Colors.white,
+              child: CircleAvatar(
+                radius: 10,
+                backgroundImage: NetworkImage('https://i.pravatar.cc/100?u=2'),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            Icon(Icons.inbox_rounded, size: 48, color: Colors.grey[300]),
+            const SizedBox(height: 8),
+            Text(
+              'No drafts yet',
+              style: TextStyle(color: Colors.grey[400]),
+            ),
+          ],
         ),
       ),
     );
